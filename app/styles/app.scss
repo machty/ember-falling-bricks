@@ -48,9 +48,16 @@ table {
   -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
  }
 
+html {
+  position: relative;
+  height: 120%;
+}
+
 $text-color: #ccc;
 
 body {
+  position: relative;
+  height: 120%;
   font-family: 'Orbitron', sans-serif;
   background: black;
   color: $text-color;
@@ -102,7 +109,8 @@ li.brick {
   left: 0;
   background-color: rgba(80,80,80,0.5);
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 5px;
+  -webkit-transform: translateZ(0);
 
   &.has-landed {
     background-color: #666;
@@ -136,9 +144,15 @@ li.brick {
   position: relative;
   overflow: hidden;
   padding: 0 68px;
+
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 .upcoming-colors {
+
   z-index: 5;
   position: absolute;
   top: -68px;
@@ -146,6 +160,12 @@ li.brick {
   padding: 20px;
 
   ul {
+    -webkit-transition: top 0.3s linear;
+    -moz-transition: top 0.3s linear;
+    -o-transition: top 0.3s linear;
+    -ms-transition: top 0.3s linear;
+    transition: top 0.3s linear;
+
     top: 0;
     position: relative;
     display: block;
@@ -158,6 +178,20 @@ li.brick {
     width: $upcoming-color-size;
     border-radius: 2px;
     margin-bottom: 10px;
+
+    -webkit-transition: all 0.1s linear;
+    -moz-transition: all 0.1s linear;
+    -o-transition: all 0.1s linear;
+    -ms-transition: all 0.1s linear;
+    transition: all 0.1s linear;
+
+    &.next-up {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      left: -7px;
+      border-radius: 4px;
+    }
   }
 }
 
@@ -170,7 +204,7 @@ li.brick {
 }
 
 .corner-menu {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   text-align: center;
   width: 100%;

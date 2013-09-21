@@ -1,5 +1,7 @@
 import Brick from 'appkit/models/brick';
 
+var TOUCH_ENABLED = ('ontouchstart' in document.documentElement);
+
 var requestAnimationFrame = (function() {
   return window.requestAnimationFrame ||
          window.webkitRequestAnimationFrame ||
@@ -9,11 +11,11 @@ var requestAnimationFrame = (function() {
          function(callback) { window.setTimeout(callback, 1000 / 60); };
 })();
 
-var BRICK_HEIGHT = 40,
+var BRICK_HEIGHT = 55,
     FALLING_BRICK_MARGIN = 15,
     STACK_SIZE = 10,
     FULL_STACK_SIZE = (BRICK_HEIGHT) * STACK_SIZE,
-    TOP_GUTTER_HEIGHT = 150,
+    TOP_GUTTER_HEIGHT = 130,
     TOTAL_HEIGHT = FULL_STACK_SIZE + TOP_GUTTER_HEIGHT,
     FAST_FALL_SPEED = 900;
 
@@ -101,8 +103,15 @@ var FallingBricksComponent = Ember.Component.extend({
           }
         }
       } else {
-        newDistanceFromBottom = Math.max(minimumDistanceFromBottom,
-                                         brick.distanceFromBottom - slowDistanceDropped);
+
+        if (brick.hasLanded) {
+          newDistanceFromBottom = Math.max(minimumDistanceFromBottom,
+                                           brick.distanceFromBottom - fastDistanceDropped);
+        } else {
+          newDistanceFromBottom = Math.max(minimumDistanceFromBottom,
+                                           brick.distanceFromBottom - slowDistanceDropped);
+        }
+
         if (newDistanceFromBottom === minimumDistanceFromBottom) {
           brick.set('hasLanded', true);
         } else {
@@ -135,10 +144,14 @@ var FallingBricksComponent = Ember.Component.extend({
     Ember.run.schedule('afterRender', this, function() {
       // Animate upcoming colors.
       var shiftAmount = "35px";
-      this.$('.upcoming-colors ul')
-          .stop(true, true)
-          .css({ top: '-=' + shiftAmount })
-          .animate({ top: '+=' + shiftAmount }, 300, 'linear');
+      var $upcomingColors = this.$('.upcoming-colors ul');
+
+      $upcomingColors.addClass('notransition')
+                     .css({ top: '-' + shiftAmount });
+
+      $upcomingColors.height(); // flush
+      $upcomingColors.removeClass('notransition').css({ top: '0px'});
+      $upcomingColors.find('li').last().addClass('next-up');
     });
     return this.get('gameState').popColor();
   },
@@ -159,6 +172,16 @@ var FallingBricksComponent = Ember.Component.extend({
           --brickIndex;
         }
         brickIndex += 1;
+
+        // Absorb a gray from each end.
+        if (brickIndex > 0 && !bricks[brickIndex - 1].color) {
+          --brickIndex;
+        }
+
+        var nextBrick = bricks[endIndex];
+        if (nextBrick && nextBrick.hasLanded && !nextBrick.color) {
+          ++endIndex;
+        }
 
         bricks.removeAt(brickIndex, endIndex - brickIndex);
       } else if (!brick.color && !brick.hasLanded) {
@@ -183,15 +206,21 @@ var FallingBricksComponent = Ember.Component.extend({
 
         return (brick.color ? "background-color: " + brick.color + "; " : "" ) +
                "bottom: " + Math.floor(brick.distanceFromBottom) + "px; " +
+               //"-webkit-transform: translateY(" + (TOTAL_HEIGHT - brick.distanceFromBottom - BRICK_HEIGHT) + "px); " +
                "height: " + BRICK_HEIGHT + "px; ";
       }.property('brick.color', 'brick.distanceFromBottom'),
 
       mouseDown: function() {
-        this.triggerAction();
+        if (!TOUCH_ENABLED) {
+          this.triggerAction();
+        }
       },
 
-      touchStart: function() {
-        this.triggerAction();
+      touchStart: function(e) {
+        if (TOUCH_ENABLED) {
+          e.preventDefault();
+          this.triggerAction();
+        }
       }
     })
   })
