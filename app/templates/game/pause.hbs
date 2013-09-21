@@ -1,4 +1,7 @@
-<h1>
-  Oh my god we are paused. {{#link-to 'game.play'}}Back to Game{{/link-to}}
-</h1>
-
+<div id="pause-screen">
+  <ul class="menu">
+    {{#each options}}
+      <li>{{#link-to 'game.play'}}Resume{{/link-to}}</li>
+    {{/each}}
+  </ul>
+</div>

@@ -4,7 +4,7 @@ var GamePlayRoute = Ember.Route.extend({
   controllerName: 'game',
 
   setupController: function(gameController) {
-    this.controller.set('isPlaying', true);
+    gameController.set('isPlaying', true);
   },
 
   deactivate: function() {

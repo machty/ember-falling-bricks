@@ -1,5 +1,5 @@
-<h1>We are playing a game. {{#link-to 'game.pause'}}Pause{{/link-to}}</h1>
+<h1>{{#link-to 'game.pause'}}Menu{{/link-to}}</h1>
 
-{{falling-bricks isPlaying=isPlaying speed=brickSpeed}}
+{{falling-bricks gameState=model}}
 
 {{outlet 'pause'}}
