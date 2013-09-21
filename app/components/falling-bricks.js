@@ -15,13 +15,17 @@ var BRICK_HEIGHT = 40,
     FULL_STACK_SIZE = (BRICK_HEIGHT + FALLING_BRICK_MARGIN) * STACK_SIZE,
     TOP_GUTTER_HEIGHT = 200,
     TOTAL_HEIGHT = FULL_STACK_SIZE + TOP_GUTTER_HEIGHT,
-    FAST_FALL_SPEED = 300;
+    FAST_FALL_SPEED = 900;
 
 var FallingBricksComponent = Ember.Component.extend({
 
+  classNames: ['falling-bricks'],
+
   gameState: null,
-  
+
   bricks: Ember.computed.alias('gameState.bricks'),
+  speed: Ember.computed.alias('gameState.speed'),
+  isPlaying: Ember.computed.alias('gameState.isPlaying'),
 
   initTicker: function() {
     var self = this;
@@ -34,17 +38,22 @@ var FallingBricksComponent = Ember.Component.extend({
     this.$('ul.bricks').height(TOTAL_HEIGHT);
   }.on('didInsertElement'),
 
-  reset: function() {
-    this.setProperties({
-      lastTimestamp: null
-      //bricks: "       ".split('').map(function(_, i) { return Brick.create({
-        //distanceFromBottom: (i + 1) * 50
-      //}); })
-    });
-  }.on('init'),
+  addBrickIfNecessary: function() {
+    var bricks = this.get('bricks');
+
+    if (bricks.length >= STACK_SIZE) { return; }
+
+    var lastBrick = bricks.get('lastObject');
+    if (!lastBrick ||
+        TOTAL_HEIGHT - lastBrick.distanceFromBottom >= BRICK_HEIGHT + FALLING_BRICK_MARGIN) {
+      bricks.pushObject(Brick.create({
+        distanceFromBottom: TOTAL_HEIGHT
+      }));
+    }
+  },
 
   tick: function(timestamp) {
-    if (!this.isPlaying) { return; }
+    if (!this.get('isPlaying')) { return; }
 
     // Schedule the next tick to fire.
     requestAnimationFrame(this._tick);
@@ -57,15 +66,16 @@ var FallingBricksComponent = Ember.Component.extend({
     // should move.
     if (!lastTimestamp) { return; }
 
-    var gameState = this.get('gameState'),
-        timeElapsed = timestamp - lastTimestamp,
-        speed = gameState.get('speed'),
+    var timeElapsed = timestamp - lastTimestamp,
+        speed = this.get('speed'),
         secondsElapsed = timeElapsed / 1000,
         slowDistanceDropped = secondsElapsed * speed,
         fastDistanceDropped = secondsElapsed * FAST_FALL_SPEED;
 
+    this.addBrickIfNecessary();
+
     var isCollapsing = false;
-    gameState.get('bricks').forEach(function(brick, i, bricks) {
+    this.get('bricks').forEach(function(brick, i, bricks) {
       var lastBrick = (i > 0) ? bricks[i-1] : null,
           minimumDistanceFromBottom = lastBrick ? lastBrick.distanceFromBottom + BRICK_HEIGHT : 0;
 
@@ -99,8 +109,8 @@ var FallingBricksComponent = Ember.Component.extend({
   },
 
   isPlayingDidChange: function() {
-    if (this.isPlaying) {
-      // Start the timer
+    if (this.get('isPlaying')) {
+      // Start the loop timer
       requestAnimationFrame(this._tick);
     } else {
       // Clear out the previous timestamp.
@@ -108,12 +118,49 @@ var FallingBricksComponent = Ember.Component.extend({
     }
   }.observes('isPlaying').on('didInsertElement'),
 
+  getNewColor: function() {
+    Ember.run.schedule('afterRender', this, function() {
+      // Animate upcoming colors.
+      var shiftAmount = "35px";
+      this.$('.upcoming-colors ul')
+          .css({ top: '-=' + shiftAmount })
+          .animate({ top: '+=' + shiftAmount }, 300, 'linear');
+    });
+    return this.get('gameState').popColor();
+  },
+
+  actions: {
+    brickWasSelected: function(brick) {
+      if (brick.grouped) {
+        var bricks = this.get('bricks'),
+            brickIndex = bricks.indexOf(brick);
+
+        var endIndex = brickIndex + 1;
+        while (endIndex < bricks.length &&
+               bricks[endIndex].color === brick.color) {
+          ++endIndex;
+        }
+
+        while (brickIndex >= 0 && bricks[brickIndex].color === brick.color) {
+          --brickIndex;
+        }
+        brickIndex += 1;
+
+        bricks.removeAt(brickIndex, endIndex - brickIndex);
+      } else if (!brick.color && !brick.hasLanded) {
+        brick.set('color', this.getNewColor());
+      }
+    }
+  },
+
   brickCollectionView: Ember.CollectionView.extend({
     tagName: 'ul',
     classNames: ['bricks'],
 
-    itemViewClass: Ember.View.extend({
+    itemViewClass: Ember.View.extend(Ember.ViewTargetActionSupport, {
       brick: Ember.computed.alias('content'),
+      actionContext: Ember.computed.alias('brick'),
+      action: 'brickWasSelected',
 
       classNameBindings: [':brick', 'brick.grouped', 'brick.color:selected', 'brick.hasLanded'],
       attributeBindings: ['style'],
@@ -125,14 +172,12 @@ var FallingBricksComponent = Ember.Component.extend({
                "height: " + BRICK_HEIGHT + "px; ";
       }.property('brick.color', 'brick.distanceFromBottom'),
 
-      click: function() {
-        var brick = this.get('brick');
+      mouseDown: function() {
+        this.triggerAction();
+      },
 
-        if (brick.grouped) {
-          // Check if this stacked block that can be removed.
-        } else if (!brick.color && !brick.hasLanded) {
-          this.set('content.color', 'red');
-        }
+      touchStart: function() {
+        this.triggerAction();
       }
     })
   })

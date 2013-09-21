@@ -1,1 +1,9 @@
+<div class="upcoming-colors">
+  <ul>
+    {{#each gameState.upcomingColors}}
+      <li style="background-color: {{unbound this}};"></li>
+    {{/each}}
+  </ul>
+</div>
+
 {{view brickCollectionView contentBinding="bricks"}}

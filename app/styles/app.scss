@@ -89,6 +89,7 @@ ul.bricks {
   display: block;
   position: relative;
   background: #111;
+  overflow: hidden;
 }
 
 @keyframes pulsate { from { background-color: white; } }
@@ -127,5 +128,51 @@ li.brick {
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 50;
+}
+
+.falling-bricks {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  padding: 0 68px;
+}
+
+.upcoming-colors {
+  z-index: 5;
+  position: absolute;
+  top: -68px;
+  left: 0;
+  padding: 20px;
+
+  ul {
+    top: 0;
+    position: relative;
+    display: block;
+  }
+
+  $upcoming-color-size: 25px;
+  li {
+    display: block;
+    height: $upcoming-color-size;
+    width: $upcoming-color-size;
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+}
+
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  -ms-transition: none !important;
+  transition: none !important;
+}
+
+#in-game-menu {
+  position: absolute;
+  bottom: 0;
+  text-align: center;
+  width: 100%;
 }
 
