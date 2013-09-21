@@ -1,9 +1,9 @@
 var SPEEDS = {
   'Slow': 40,
-  'Normal': 80,
-  'Fast': 140,
-  'Crazy Fast': 200,
-  'RAAAAAAA': 300
+  'Normal': 60,
+  'Fast': 100,
+  'Crazy Fast': 150,
+  'RAAAAAAA': 220
 };
 
 var SelectSpeedRoute = Ember.Route.extend({

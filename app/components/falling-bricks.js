@@ -12,8 +12,8 @@ var requestAnimationFrame = (function() {
 var BRICK_HEIGHT = 40,
     FALLING_BRICK_MARGIN = 15,
     STACK_SIZE = 10,
-    FULL_STACK_SIZE = (BRICK_HEIGHT + FALLING_BRICK_MARGIN) * STACK_SIZE,
-    TOP_GUTTER_HEIGHT = 200,
+    FULL_STACK_SIZE = (BRICK_HEIGHT) * STACK_SIZE,
+    TOP_GUTTER_HEIGHT = 150,
     TOTAL_HEIGHT = FULL_STACK_SIZE + TOP_GUTTER_HEIGHT,
     FAST_FALL_SPEED = 900;
 
@@ -22,6 +22,8 @@ var FallingBricksComponent = Ember.Component.extend({
   classNames: ['falling-bricks'],
 
   gameState: null,
+
+  userLost: false,
 
   bricks: Ember.computed.alias('gameState.bricks'),
   speed: Ember.computed.alias('gameState.speed'),
@@ -74,7 +76,9 @@ var FallingBricksComponent = Ember.Component.extend({
 
     this.addBrickIfNecessary();
 
-    var isCollapsing = false;
+    var isCollapsing = false,
+        groupsPresent = false;
+
     this.get('bricks').forEach(function(brick, i, bricks) {
       var lastBrick = (i > 0) ? bricks[i-1] : null,
           minimumDistanceFromBottom = lastBrick ? lastBrick.distanceFromBottom + BRICK_HEIGHT : 0;
@@ -90,9 +94,10 @@ var FallingBricksComponent = Ember.Component.extend({
           // Bricks become ungrouped when collapsing.
           brick.set('grouped', false);
         } else {
-          if (lastBrick && lastBrick.color === brick.color) {
+          if (lastBrick && brick.color && lastBrick.color === brick.color) {
             lastBrick.set('grouped', true);
             brick.set('grouped', true);
+            groupsPresent = true;
           }
         }
       } else {
@@ -100,12 +105,20 @@ var FallingBricksComponent = Ember.Component.extend({
                                          brick.distanceFromBottom - slowDistanceDropped);
         if (newDistanceFromBottom === minimumDistanceFromBottom) {
           brick.set('hasLanded', true);
+        } else {
+          isCollapsing = true;
         }
       }
 
       brick.set('distanceFromBottom', newDistanceFromBottom);
       lastBrick = brick;
     });
+
+    // Check if the user has lost.
+    if (!isCollapsing && !groupsPresent) {
+      this.set('isPlaying', false);
+      Ember.run.later(this, 'sendAction', 'gameOver', 800);
+    }
   },
 
   isPlayingDidChange: function() {
@@ -123,6 +136,7 @@ var FallingBricksComponent = Ember.Component.extend({
       // Animate upcoming colors.
       var shiftAmount = "35px";
       this.$('.upcoming-colors ul')
+          .stop(true, true)
           .css({ top: '-=' + shiftAmount })
           .animate({ top: '+=' + shiftAmount }, 300, 'linear');
     });

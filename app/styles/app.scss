@@ -72,10 +72,10 @@ ul.menu {
   li {
     text-align: center;
     display: block;
+    line-height: 50px;
 
     a {
       display: block;
-      line-height: 50px;
       padding-top: 5px;
       &:hover {
         background: #222;
@@ -169,10 +169,26 @@ li.brick {
   transition: none !important;
 }
 
-#in-game-menu {
+.corner-menu {
   position: absolute;
   bottom: 0;
   text-align: center;
   width: 100%;
 }
+
+#instructions {
+  margin: 60px auto;
+  position: relative;
+  width: 500px;
+
+  p {
+    margin: 1em 0;
+    font-size: 18px;
+    line-height: 1.1em;
+    color: #888;
+    line-height: 1.2em;
+  }
+}
+
+
 
