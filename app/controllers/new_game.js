@@ -1,8 +1,10 @@
+import GameController from 'appkit/controllers/game';
+
 var NewGameController = Ember.Controller.extend({
 
   needs: ['game'],
 
-  options: Ember.computed.alias('controllers.game.gameTypes'),
+  options: GameController.gameTypes,
 
   actions: {
     makeSelection: function(gameType) {
