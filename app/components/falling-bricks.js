@@ -56,6 +56,27 @@ var FallingBricksComponent = Ember.Component.extend({
     }
   },
 
+  startListeningForKeyboardEvents: function() {
+    var self = this;
+    this._keyPressListener = function(e) {
+      Ember.run(self, function() {
+        if (e.keyCode == 32) {
+          e.preventDefault();
+          if (this.hoveredBrick) {
+            this.send('brickWasSelected', this.hoveredBrick);
+          }
+        }
+      });
+    };
+
+    Ember.$(document).on('keypress', this._keyPressListener);
+  }.on('didInsertElement'),
+
+  stopListeningForKeyboardEvents: function() {
+    Ember.$(document).off('keypress', this._keyPressListener);
+    this._keyPressListener = null;
+  }.on('willDestroyElement'),
+
   tick: function(timestamp) {
     if (!this.get('isPlaying')) { return; }
 
@@ -158,6 +179,8 @@ var FallingBricksComponent = Ember.Component.extend({
 
   actions: {
     brickWasSelected: function(brick) {
+      this.hoveredBrick = null;
+
       if (brick.grouped) {
         var bricks = this.get('bricks'),
             brickIndex = bricks.indexOf(brick);
@@ -187,6 +210,9 @@ var FallingBricksComponent = Ember.Component.extend({
       } else if (!brick.color && !brick.hasLanded) {
         brick.set('color', this.getNewColor());
       }
+    },
+    brickWasHovered: function(brick) {
+      this.hoveredBrick = brick;
     }
   },
 
@@ -213,6 +239,12 @@ var FallingBricksComponent = Ember.Component.extend({
       mouseDown: function() {
         if (!TOUCH_ENABLED) {
           this.triggerAction();
+        }
+      },
+
+      mouseEnter: function() {
+        if (!TOUCH_ENABLED) {
+          this.triggerAction({ action: 'brickWasHovered' });
         }
       },
 
